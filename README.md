@@ -1,5 +1,5 @@
 # onchain
 
 ``` php
-composer require winds/onchain
+composer require cadk-ui87/onchain
 ```
