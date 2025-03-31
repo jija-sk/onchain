@@ -156,10 +156,10 @@ class Utils {
         $client = new Client(['timeout' => 15]);
         try {
             $response = $client->request($method, $url, $options)->getBody();
-            return json_decode((string)$response, true, 512, JSON_THROW_ON_ERROR);
         } catch (GuzzleException $e) {
             throw new Exception("Request to $url failed: " . $e->getMessage());
         }
+        return json_decode((string)$response, true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
