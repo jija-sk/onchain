@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "08d8b1ea69a46f30cee8c3386fc9eb4b",
+    "content-hash": "a541cecb25dc5466d6231872a05d7896",
     "packages": [
         {
             "name": "charcoal-dev/buffers",
