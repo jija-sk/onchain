@@ -17,7 +17,7 @@
     }
   ],
   "type": "library",
-  "homepage": "https://github.com/Fenguoz/bsc-php",
+  "homepage": "https://github.com/jija-sk/onchain",
   "license": "MIT",
   "require": {
     "php": "^8.2",
