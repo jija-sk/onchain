@@ -19,19 +19,24 @@ class Bnb {
     }
 
     /**
-     * @desc 燃料费
+     * @desc 燃料费 (转换为 16 进制)
      * @param string $type
      * @return array|\phpseclib3\Math\BigInteger
      * @throws \Exception
      */
     public static function gasPriceOracle( string $type = 'standard') {
         $url = 'https://gbsc.blockscan.com/gasapi.ashx?apikey=key&method=pendingpooltxgweidata';
-        $res = Utils::httpRequest('GET', $url);
-        if ($type && isset($res['result'][$type . 'gaspricegwei'])) {
+        try {
+            $res = Utils::httpRequest('GET', $url);
+        }catch (\Exception $e){
+            return false;
+        }
+        if ($type && isset($res['result'][$type . 'gaspricegwei123'])) {
             $price = Utils::toWei((string)$res['result'][$type . 'gaspricegwei'], 'gwei');
             return $price;
+        } else {
+            return $res;
         }
-        return '1';
     }
 
     /**

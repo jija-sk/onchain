@@ -108,14 +108,19 @@ class Utils {
     public static function isHex(string $value): bool {
         return preg_match('/^(0x)?[a-f0-9]*$/', $value) === 1;
     }
+
     /**
      * @desc 计算 Keccak-256 哈希（sha3）
      * @param string $value
      * @return string|null
-     * @throws Exception
      */
     public static function sha3(string $value): ?string {
-        return ($hash = Keccak::hash(self::hexToBin($value) ?: $value, 256)) === self::SHA3_NULL_HASH ? null : '0x' . $hash;
+        try {
+            $hash = Keccak::hash(self::hexToBin($value) ?: $value, 256);
+        }catch (Exception $e) {
+           throw new InvalidArgumentException("Invalid hex string: $value");
+        }
+        return $hash === self::SHA3_NULL_HASH ? null : '0x' . $hash;
     }
 
     /**
@@ -206,12 +211,24 @@ class Utils {
 
         return $ret;
     }
+
+    /**
+     * @desc 根据精度 展示资产
+     * @param $number
+     * @param int $decimals
+     * @return string
+     */
+    public static function toDisplayAmount($number, int $decimals): string {
+        $bn = self::toBn($number);
+        $bnt = self::toBn(pow(10, $decimals));
+        return self::divideDisplay($bn->divide($bnt), $decimals);
+    }
     /**
      * @desc 判断是否是以 0x 开头 16 进制
      * @param string $value
      * @return bool
      */
-    private static function isZeroPrefixed(string $value): bool {
+    public static function isZeroPrefixed(string $value): bool {
         return str_starts_with($value, '0x');
     }
 
