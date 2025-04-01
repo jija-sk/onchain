@@ -99,7 +99,15 @@ class Utils {
         }
         return true;
     }
-
+    /**
+     * isHex
+     *
+     * @param string $value
+     * @return bool
+     */
+    public static function isHex(string $value): bool {
+        return preg_match('/^(0x)?[a-f0-9]*$/', $value) === 1;
+    }
     /**
      * @desc 计算 Keccak-256 哈希（sha3）
      * @param string $value
@@ -183,6 +191,21 @@ class Utils {
         return self::isZeroPrefixed($value) ? substr($value, 2) : $value;
     }
 
+    /**
+     * @desc 转换
+     * @param array $divResult
+     * @param int $decimals
+     * @return string
+     */
+    public static function divideDisplay(array $divResult, int $decimals) {
+        list($bnq, $bnr) = $divResult;
+        $ret = $bnq->toString();
+        if ($bnr->toString() > 0) {
+            $ret .= '.' . rtrim(sprintf("%0{$decimals}d", $bnr->toString()), '0');
+        }
+
+        return $ret;
+    }
     /**
      * @desc 判断是否是以 0x 开头 16 进制
      * @param string $value

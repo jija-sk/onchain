@@ -9,7 +9,7 @@ interface ProxyApi {
 
     public function gasPrice();
 
-    public function Balance(string $address);
+    public function BalanceBNB(string $address);
 
     public function receiptStatus(string $txHash): ?bool;
 

@@ -64,18 +64,16 @@ class BscScanApi implements ProxyApi {
         return $this->send('eth_gasPrice');
     }
 
-    public function Balance(string $address) {
+    public function BalanceBNB(string $address) {
         $params['module'] = 'account';
         $params['address'] = $address;
 
         $retDiv = Utils::fromWei($this->send('balance', $params), 'ether');
-        var_dump($retDiv);
-        return false;
-//        if (is_array($retDiv)) {
-//            return Utils::divideDisplay($retDiv, 18);
-//        } else {
-//            return $retDiv;
-//        }
+        if (is_array($retDiv)) {
+            return Utils::divideDisplay($retDiv, 18);
+        } else {
+            return $retDiv;
+        }
     }
 
     public function receiptStatus(string $txHash): ?bool {
