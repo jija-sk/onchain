@@ -10,7 +10,7 @@ class BscScanApi implements ProxyApi {
     protected $apiKey;
     protected $network;
 
-    function __construct(string $apiKey, $network = 'mainnet') {
+    public function __construct(string $apiKey, $network = 'mainnet') {
         $this->apiKey = $apiKey;
         $this->network = $network;
     }
@@ -76,32 +76,77 @@ class BscScanApi implements ProxyApi {
         }
     }
 
+    /**
+     * @desc 交易状态 #TODO
+     * @param string $txHash
+     * @return bool|null
+     */
     public function receiptStatus(string $txHash): ?bool {
-        // TODO: Implement receiptStatus() method.
+        $res = $this->send('eth_getTransactionByHash', ['txHash' => $txHash]);
+        if(!$res){
+            return false;
+        }
+        if(!$res['blockNumber']){
+            return null;
+        }
+        $params['module'] = 'transaction';
+        $params['txhash'] = $txHash;
+        $res =  $this->send('gettxreceiptstatus', $params);
+        return $res['status'] == '1';
     }
 
+    /**
+     * @desc 转账结果查询 #TODO
+     * @param string $txHash
+     * @return array|false
+     */
     public function getTransactionReceipt(string $txHash) {
-        // TODO: Implement getTransactionReceipt() method.
+        $res = $this->send('eth_getTransactionReceipt', ['txhash' => $txHash]);
+        return $res;
     }
 
+    /**
+     * @desc 交易详情
+     * @param string $txHash
+     * @return array|false
+     */
     public function getTransactionByHash(string $txHash) {
-        // TODO: Implement getTransactionByHash() method.
+        return $this->send('eth_getTransactionByHash', ['txHash' => $txHash]);
     }
 
+    /**
+     * @desc 广播交易
+     * @param $raw
+     * @return array|false
+     */
     public function sendRawTransaction($raw) {
-        // TODO: Implement sendRawTransaction() method.
+        return $this->send('eth_sendRawTransaction', ['hex' => $raw]);
     }
 
+    /**
+     * @desc 获取 nonce
+     * @param string $address
+     * @return array|false
+     */
     public function getNonce(string $address) {
-        // TODO: Implement getNonce() method.
+        return $this->send('eth_getTransactionCount', ['address' => $address]);
     }
 
+    /**
+     * @desc eth_call
+     * @param $params
+     * @return array|false
+     */
     public function ethCall($params) {
-        // TODO: Implement ethCall() method.
+        return $this->send('eth_call', ['params' => $params, 'latest']);
     }
 
+    /**
+     * @desc  获取最新的交易块号
+     * @return float|int
+     */
     public function blockNumber() {
-        // TODO: Implement blockNumber() method.
+        return hexdec($this->send('eth_blockNumber'));
     }
 
     public function getBlockByNumber(int $blockNumber) {

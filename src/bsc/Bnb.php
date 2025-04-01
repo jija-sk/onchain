@@ -44,7 +44,7 @@ class Bnb {
      * @param string $network
      * @return int
      */
-    public static function getChainId(string $network): int {
+    public static function getChainId(string $network='mainnet'): int {
         $chainId = 0;
         switch ($network) {
             case 'mainnet':

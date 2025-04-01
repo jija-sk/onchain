@@ -223,6 +223,22 @@ class Utils {
         $bnt = self::toBn(pow(10, $decimals));
         return self::divideDisplay($bn->divide($bnt), $decimals);
     }
+
+    public static function toMinUnitByDecimals($number, int $decimals): BigInteger {
+        $bn = self::toBn($number);
+        $bnt = new BigInteger(bcpow('10', (string) $decimals));
+
+        if (is_array($bn)) {
+            [$whole, $fraction, $fractionLength, $negative] = $bn;
+            $whole = $whole->multiply($bnt);
+            $fractionBase = new BigInteger(bcpow('10', (string) $fractionLength));
+            $fraction = $fraction->multiply($bnt)->divide($fractionBase)[0];
+
+            $result = $whole->add($fraction);
+            return $negative ? $result->multiply($negative) : $result;
+        }
+        return $bn->multiply($bnt);
+    }
     /**
      * @desc 判断是否是以 0x 开头 16 进制
      * @param string $value
