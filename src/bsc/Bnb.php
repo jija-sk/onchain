@@ -31,7 +31,7 @@ class Bnb {
         }catch (\Exception $e){
             return false;
         }
-        if ($type && isset($res['result'][$type . 'gaspricegwei123'])) {
+        if ($type && isset($res['result'][$type . 'gaspricegwei'])) {
             $price = Utils::toWei((string)$res['result'][$type . 'gaspricegwei'], 'gwei');
             return $price;
         } else {

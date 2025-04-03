@@ -19,9 +19,9 @@ class BscScanApi implements ProxyApi {
      * @desc 发送请求
      * @param string $method
      * @param array $params
-     * @return false|array
+     * @return false|array|string
      */
-    public function send(string $method, array $params = []):false|array{
+    public function send(string $method, array $params = []):false|array|string{
         $defaultParams = [
             'module' => 'proxy',
             'tag' => 'latest',
@@ -38,7 +38,7 @@ class BscScanApi implements ProxyApi {
             $preApi .= '-' . $this->network;
         }
 
-        $url = 'https://'.$preApi.'bscscan.com/api?action='.$method.'&apikey='.$this->apiKey;
+        $url = 'https://'.$preApi.'.bscscan.com/api?action='.$method.'&apikey='.$this->apiKey;
         if ($params && count($params) > 0) {
             $strParams = http_build_query($params);
             $url .= "&{$strParams}";
@@ -149,7 +149,13 @@ class BscScanApi implements ProxyApi {
         return hexdec($this->send('eth_blockNumber'));
     }
 
+    /**
+     * @desc 获取块号详情
+     * @param int $blockNumber
+     * @return array|false|string
+     */
     public function getBlockByNumber(int $blockNumber) {
-        // TODO: Implement getBlockByNumber() method.
+        $blockNumber = Utils::toHex($blockNumber, true);
+        return $this->send('eth_getBlockByNumber', ['blockNumber' => $blockNumber, true]);
     }
 }
