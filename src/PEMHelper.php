@@ -46,9 +46,8 @@ class PEMHelper {
      * @return string Ethereum-compatible address
      */
     public static function publicKeyToAddress(string $publicKey): string {
-        Utils::validateHex($publicKey, 130, 'Invalid public key format or length.');
-
         $publicKey = Utils::stripZero($publicKey);
+        Utils::validateHex($publicKey, 130, 'Invalid public key format or length.');
         $hashed = self::sha3(hex2bin(substr($publicKey, 2)));
 
         return '0x' . substr($hashed, -40);
