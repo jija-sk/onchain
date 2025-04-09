@@ -44,13 +44,15 @@ class PEMHelper {
      * Convert Public Key to Address.
      *
      * @param string $publicKey Public Key (HEX)
-     * @return string Ethereum-compatible address
+     * @return string|null Ethereum-compatible address
      */
-    public static function publicKeyToAddress(string $publicKey): string {
+    public static function publicKeyToAddress(string $publicKey): ?string {
         $publicKey = Utils::stripZero($publicKey);
         Utils::validateHex($publicKey, 130, 'Invalid public key format or length.');
         $hashed = self::sha3(hex2bin(substr($publicKey, 2)));
-
+        if(is_null($hashed)){
+            return null;
+        }
         return '0x' . substr($hashed, -40);
     }
 
@@ -58,9 +60,9 @@ class PEMHelper {
      * Convert Private Key to Address.
      *
      * @param string $privateKey Private Key (HEX)
-     * @return string Ethereum-compatible address
+     * @return string|null Ethereum-compatible address
      */
-    public static function privateKeyToAddress(string $privateKey): string {
+    public static function privateKeyToAddress(string $privateKey): ?string {
         return self::publicKeyToAddress(self::privateKeyToPublicKey($privateKey));
     }
 
@@ -82,13 +84,12 @@ class PEMHelper {
      * Compute Keccak-256 (SHA3) hash.
      * @param string $value Input data
      * @return string|null Keccak-256 hash or null if empty
-     * @throws Exception
      */
     public static function sha3(string $value): ?string {
         try {
             $hash = Keccak::hash($value, 256);
         }catch (Exception $e){
-            throw new Exception('Unsupported Keccak Hash output size.');
+            return null;
         }
         return ($hash === 'c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470') ? null : $hash;
     }
