@@ -7,6 +7,7 @@ use Sop\CryptoTypes\Asymmetric\EC\ECPrivateKey;
 use Sop\CryptoEncoding\PEM;
 use RuntimeException;
 use Elliptic\EC;
+use Exception;
 
 class PEMHelper {
     /**
@@ -79,12 +80,16 @@ class PEMHelper {
 
     /**
      * Compute Keccak-256 (SHA3) hash.
-     *
      * @param string $value Input data
      * @return string|null Keccak-256 hash or null if empty
+     * @throws Exception
      */
     public static function sha3(string $value): ?string {
-        $hash = Keccak::hash($value, 256);
+        try {
+            $hash = Keccak::hash($value, 256);
+        }catch (Exception $e){
+            throw new Exception('Unsupported Keccak Hash output size.');
+        }
         return ($hash === 'c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470') ? null : $hash;
     }
 }
