@@ -20,6 +20,9 @@ class Wallet {
     public static function create_account_with_private(): array {
         $privateKey = PEMHelper::generateNewPrivateKey();
         $address = PEMHelper::privateKeyToAddress($privateKey);
+        if($address ===''){
+            return [];
+        }
         return [
             "address" => $address,
             "private_key" => $privateKey,

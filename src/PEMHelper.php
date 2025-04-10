@@ -44,14 +44,14 @@ class PEMHelper {
      * Convert Public Key to Address.
      *
      * @param string $publicKey Public Key (HEX)
-     * @return string|null Ethereum-compatible address
+     * @return string Ethereum-compatible address
      */
-    public static function publicKeyToAddress(string $publicKey): ?string {
+    public static function publicKeyToAddress(string $publicKey): string {
         $publicKey = Utils::stripZero($publicKey);
         Utils::validateHex($publicKey, 130, 'Invalid public key format or length.');
         $hashed = self::sha3(hex2bin(substr($publicKey, 2)));
-        if(is_null($hashed)){
-            return null;
+        if($hashed ===''){
+            return '';
         }
         return '0x' . substr($hashed, -40);
     }
@@ -60,9 +60,9 @@ class PEMHelper {
      * Convert Private Key to Address.
      *
      * @param string $privateKey Private Key (HEX)
-     * @return string|null Ethereum-compatible address
+     * @return string Ethereum-compatible address
      */
-    public static function privateKeyToAddress(string $privateKey): ?string {
+    public static function privateKeyToAddress(string $privateKey): string {
         return self::publicKeyToAddress(self::privateKeyToPublicKey($privateKey));
     }
 
@@ -74,7 +74,6 @@ class PEMHelper {
      */
     public static function privateKeyToPublicKey(string $privateKey): string {
         Utils::validateHex($privateKey, 64, 'Invalid private key format or length.');
-
         $secp256k1 = new EC('secp256k1');
         $keyPair = $secp256k1->keyFromPrivate($privateKey, 'hex');
         return '0x' . $keyPair->getPublic(false, 'hex');  // Uncompressed format
@@ -83,14 +82,14 @@ class PEMHelper {
     /**
      * Compute Keccak-256 (SHA3) hash.
      * @param string $value Input data
-     * @return string|null Keccak-256 hash or null if empty
+     * @return string Keccak-256 hash or null if empty
      */
-    public static function sha3(string $value): ?string {
+    public static function sha3(string $value): string {
         try {
             $hash = Keccak::hash($value, 256);
         }catch (Exception $e){
-            return null;
+            return '';
         }
-        return ($hash === 'c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470') ? null : $hash;
+        return ($hash === 'c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470') ? '' : $hash;
     }
 }
