@@ -28,7 +28,7 @@
     "phpseclib/phpseclib": "^3.0",
     "furqansiddiqui/bip39-mnemonic-php": "^0.2.1",
     "fenguoz/minter-php-bip-44": "^1.1",
-    "web3p/ethereum-tx": "^0.4.3",
+    "kornrunner/ethereum-offline-raw-tx": "^0.8.0",
     "ext-ctype": "*",
     "ext-gmp": "*",
     "ext-openssl": "*",

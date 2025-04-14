@@ -60,7 +60,6 @@ class Utils {
     }
 
 
-
     /**
      * @desc 将 16 进制字符串转换为二进制
      * @param string $value
@@ -80,8 +79,16 @@ class Utils {
      * @return bool
      */
     public static function isAddress(string $value): bool {
-        $value = strtolower($value);
-        return preg_match('/^(0x)?[a-f0-9]{40}$/', $value) && (ctype_lower($value) || ctype_upper($value) || self::isAddressChecksum($value));
+        if (!is_string($value)) {
+            throw new InvalidArgumentException('The value to isAddress function must be string.');
+        }
+        if (preg_match('/^(0x|0X)?[a-f0-9A-F]{40}$/', $value) !== 1) {
+            return false;
+        } elseif (preg_match('/^(0x|0X)?[a-f0-9]{40}$/', $value) === 1 || preg_match('/^(0x|0X)?[A-F0-9]{40}$/', $value) === 1) {
+            var_dump('正则');
+            return true;
+        }
+        return self::isAddressChecksum($value);
     }
 
     /**
@@ -90,23 +97,33 @@ class Utils {
      * @return bool
      */
     private static function isAddressChecksum(string $value): bool {
-        $hash = self::sha3(substr($value, 2));
+        if (!is_string($value)) {
+            throw new InvalidArgumentException('The value to isAddressChecksum function must be string.');
+        }
+        $value = self::stripZero($value);
+        $hash = self::stripZero(self::sha3(mb_strtolower($value)));
         for ($i = 0; $i < 40; $i++) {
-            if ((intval($hash[$i], 16) > 7 && strtoupper($value[$i]) !== $value[$i]) ||
-                (intval($hash[$i], 16) <= 7 && strtolower($value[$i]) !== $value[$i])) {
+            if (
+                (intval($hash[$i], 16) > 7 && mb_strtoupper($value[$i]) !== $value[$i]) ||
+                (intval($hash[$i], 16) <= 7 && mb_strtolower($value[$i]) !== $value[$i])
+            ) {
+                var_dump('hash: '.$i."--->" . $hash[$i]);
+                var_dump('value: ' .$i."--->" . $value[$i]);
+                var_dump('12313');
                 return false;
             }
         }
         return true;
     }
+
     /**
      * isHex
      *
-     * @param string $value
+     * @param mixed $value
      * @return bool
      */
-    public static function isHex(string $value): bool {
-        return preg_match('/^(0x)?[a-f0-9]*$/', $value) === 1;
+    public static function isHex(mixed $value): bool {
+        return (is_string($value) && preg_match('/^(0x)?[a-f0-9]*$/', $value) === 1);
     }
 
     /**
@@ -115,12 +132,17 @@ class Utils {
      * @return string|null
      */
     public static function sha3(string $value): ?string {
-        try {
-            $hash = Keccak::hash(self::hexToBin($value) ?: $value, 256);
-        }catch (Exception $e) {
-           throw new InvalidArgumentException("Invalid hex string: $value");
+        if (!is_string($value)) {
+            throw new InvalidArgumentException('The value to sha3 function must be string.');
         }
-        return $hash === self::SHA3_NULL_HASH ? null : '0x' . $hash;
+        if(Utils::isZeroPrefixed($value)){
+            $value = self::hexToBin($value);
+        }
+        $hash = Keccak::hash($value, 256);
+        if ($hash === self::SHA3_NULL_HASH) {
+            return null;
+        }
+        return '0x' . $hash;
     }
 
     /**
@@ -150,10 +172,41 @@ class Utils {
      * @throws InvalidArgumentException 当输入格式错误时抛出异常
      */
     public static function toBn(BigInteger|string|int|float $number): BigInteger|array {
+        if ($number instanceof BigInteger) {
+            return $number;
+        }
+
+        $negative = false;
+        $str = strtolower((string)$number);
+
+        if (self::isNegative($str)) {
+            $negative = true;
+            $str = ltrim($str, '-');
+        }
+
+        // 支持小数：返回数组
+        if (is_numeric($str) && str_contains($str, '.')) {
+            [$whole, $fraction] = explode('.', $str);
+            return [
+                new BigInteger($whole),
+                new BigInteger($fraction),
+                strlen($fraction),
+                $negative ? new BigInteger(-1) : false
+            ];
+        }
+
         return match (true) {
-            $number instanceof BigInteger => $number,
-            is_numeric($number) => new BigInteger((string)$number),
-            default => throw new InvalidArgumentException('Invalid number format.')
+            is_numeric($str) => $negative
+                ? (new BigInteger($str))->multiply(new BigInteger(-1))
+                : new BigInteger($str),
+
+            self::isZeroPrefixed($str) || preg_match('/[a-f]/', $str) => $negative
+                ? (new BigInteger(self::stripZero($str), 16))->multiply(new BigInteger(-1))
+                : new BigInteger(self::stripZero($str), 16),
+
+            $str === '' => new BigInteger(0),
+
+            default => throw new InvalidArgumentException('toBn: unsupported format.'),
         };
     }
 
@@ -187,6 +240,7 @@ class Utils {
             throw new InvalidArgumentException($errorMessage);
         }
     }
+
     /**
      * @desc 去除 "0x" 前缀（如果存在）
      * @param mixed $value
@@ -220,18 +274,19 @@ class Utils {
      */
     public static function toDisplayAmount($number, int $decimals): string {
         $bn = self::toBn($number);
-        $bnt = self::toBn(pow(10, $decimals));
+        $bnt = self::toBn(bcpow('10', (string)$decimals,0));
         return self::divideDisplay($bn->divide($bnt), $decimals);
     }
 
     public static function toMinUnitByDecimals($number, int $decimals): BigInteger {
         $bn = self::toBn($number);
-        $bnt = new BigInteger(bcpow('10', (string) $decimals));
+
+        $bnt = new BigInteger(bcpow('10', (string)$decimals));
 
         if (is_array($bn)) {
             [$whole, $fraction, $fractionLength, $negative] = $bn;
             $whole = $whole->multiply($bnt);
-            $fractionBase = new BigInteger(bcpow('10', (string) $fractionLength));
+            $fractionBase = new BigInteger(bcpow('10', (string)$fractionLength));
             $fraction = $fraction->multiply($bnt)->divide($fractionBase)[0];
 
             $result = $whole->add($fraction);
@@ -239,13 +294,14 @@ class Utils {
         }
         return $bn->multiply($bnt);
     }
+
     /**
-     * @desc 判断是否是以 0x 开头 16 进制
+     * @desc 判断是否以 0x 或 0X 开头
      * @param string $value
      * @return bool
      */
     public static function isZeroPrefixed(string $value): bool {
-        return str_starts_with($value, '0x');
+        return str_starts_with($value, '0x') || str_starts_with($value, '0X');
     }
 
     /**
@@ -259,9 +315,38 @@ class Utils {
         if (!isset(self::UNITS[$unit])) {
             throw new InvalidArgumentException("Unsupported unit: $unit.");
         }
-        $bn = self::toBn($number);
+        if (is_float($number)) {
+            $number = number_format($number, 18, '.', ''); // 最多保留 18 位小数
+        }
+
+        $bn = self::toBn($number); // 这里可以是 BigInteger 或 array
         $bnt = new BigInteger(self::UNITS[$unit]);
+
+        // 如果是 [整数部分, 小数部分, 精度, 负号] 形式
+        if (is_array($bn)) {
+            [$whole, $fraction, $fractionLen, $negative] = $bn;
+
+            // 乘上单位
+            $unitDecimals = strlen((string)self::UNITS[$unit]) - 1;
+            $multiplier = bcpow('10', (string)($unitDecimals - $fractionLen), 0);
+            $fractionWei = $fraction->multiply(new BigInteger($multiplier));
+            $wei = $whole->multiply($bnt)->add($fractionWei);
+
+            if ($negative) {
+                $wei = $wei->multiply($negative);
+            }
+
+            return $wei;
+        }
         return $toWei ? $bn->multiply($bnt) : $bn->divide($bnt);
+    }
+
+    /**
+     * @param string $value
+     * @return bool
+     */
+    private static function isNegative(string $value):bool{
+        return str_starts_with(trim($value), '-');
     }
 
 }
