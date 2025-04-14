@@ -4,8 +4,8 @@ namespace Onchain\okx;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Onchain\Utils;
-use function Symfony\Component\Translation\t;
 
 class OKTC {
     private static string $base_url = '';
@@ -13,7 +13,6 @@ class OKTC {
     public static $oktc_client = null;
     public static string $contract_usdt_address = '';
     public static int $chain_id = 0;
-
     public static function initConifg() {
         if(self::$contract_usdt_address === ''){
             self::$contract_usdt_address = '0x382bb369d343125bfb2117af9c149795c6c65c50';
@@ -57,7 +56,7 @@ class OKTC {
                     'id' => 1,
                 ]
             ]);
-        } catch (GuzzleException $e) {
+        }catch (RequestException|GuzzleException $e){
             return false;
         }
         $data = json_decode($response->getBody(), true);
@@ -83,6 +82,8 @@ class OKTC {
                     'id' => 1,
                 ]
             ]);
+        }catch (RequestException $e){
+            return false;
         } catch (GuzzleException $e) {
             var_dump('异常:' . $e->getMessage());
             return false;
@@ -93,24 +94,14 @@ class OKTC {
             return false;
         }
         $baseGasPrice = hexdec($data['result']);
-        switch ($level) {
-            case 'standard':
-                $multiplier = 1.0;
-                break;
-            case 'fast':
-                $multiplier = 1.2;
-                break;
-            case 'rapid':
-                $multiplier = 1.5;
-                break;
-            default:
-                $multiplier = 1.0;
-                break;
-        }
+        $multiplier = match ($level) {
+            'fast' => 1.2,
+            'rapid' => 1.5,
+            default => 1.0,
+        };
 
         $price_oracle = bcmul($baseGasPrice, $multiplier, 0);
-        $price_oracle = Utils::toHex($price_oracle, true);
-        return $price_oracle;
+        return Utils::toHex($price_oracle, true);
     }
 
     /**
@@ -118,7 +109,7 @@ class OKTC {
      * @param string $tx_hash
      * @return array
      */
-    public static function getTransactionByHash(string $tx_hash) {
+    public static function getTransactionByHash(string $tx_hash): array {
         $client = self::initClient();
         try {
             $response = $client->post('', [
@@ -130,10 +121,16 @@ class OKTC {
                 ]
             ]);
             $data = json_decode($response->getBody(), true);
-            if (!isset($data['result']) || is_null($data['result'])) {
+            if (!isset($data['result'])) {
                 return [
                     'code' => 400,
                     'msg' => 'tx_hash is empty',
+                ];
+            }
+            if(is_null($data['result'])){
+                return [
+                    'code' => 400,
+                    'msg' => 'tx_hash is null',
                 ];
             }
             if (is_null($data['result']['blockNumber'])) {
@@ -142,22 +139,31 @@ class OKTC {
                     'msg' => 'tx_hash is pending',
                 ];
             }
+        }catch (RequestException $e){
+            return [
+                'code' => 400,
+                'msg' => 'getTransactionByHash RequestException error, tx_hash is ' . $tx_hash .' error:' . $e->getMessage(),
+            ];
         } catch (GuzzleException $e) {
             return [
                 'code' => 400,
-                'msg' => 'eth_getTransactionByHash: ' . $e->getMessage(),
+                'msg' => 'getTransactionByHash GuzzleException error, tx_hash is ' . $tx_hash .' error:' . $e->getMessage(),
             ];
         }
-        return $data['result'];
+        return [
+            'code' => 200,
+            'data' => $data['result'],
+            'msg' => 'getTransactionByHash block_num is ' . $data['result']['blockNumber'] .' tx_hash is ' . $tx_hash,
+        ];
     }
 
     /**
      * @desc 交易结果
      * @param string $tx_hash
      * @param int $id
-     * @return array|void
+     * @return array
      */
-    public static function getTransactionReceipt(string $tx_hash, int $id = 1) {
+    public static function getTransactionReceipt(string $tx_hash, int $id = 1):array{
         $client = self::initClient();
         try {
             $response = $client->post('', [
@@ -198,10 +204,15 @@ class OKTC {
 //                'code'=>200,
 //                'msg'=> 'hash status is success',
 //            ];
+        }catch (RequestException $e){
+            return [
+                'code' => 400,
+                'msg' => 'getTransactionReceipt RequestException error, tx_hash is ' . $tx_hash .' error:' . $e->getMessage(),
+            ];
         } catch (GuzzleException $e) {
             return [
                 'code' => 400,
-                'msg' => 'eth_getTransactionReceipt: ' . $e->getMessage(),
+                'msg' => 'getTransactionReceipt GuzzleException error, tx_hash is ' . $tx_hash .' error:' . $e->getMessage(),
             ];
         }
     }
@@ -230,10 +241,15 @@ class OKTC {
                 ];
             }
 
+        }catch (RequestException $e){
+            return [
+                'code' => 400,
+                'msg' => 'sendRaw RequestException error, raw is ' . $raw .' error:' . $e->getMessage(),
+            ];
         } catch (GuzzleException $e) {
             return [
                 'code' => 400,
-                'msg' => 'send raw error: ' . $e->getMessage(),
+                'msg' => 'sendRaw GuzzleException error, raw is ' . $raw .' error:' . $e->getMessage(),
             ];
         }
         return [
@@ -265,7 +281,7 @@ class OKTC {
                 return false;
             }
             return hexdec($data['result']);
-        } catch (GuzzleException $e) {
+        }catch (RequestException|GuzzleException $e){
             return false;
         }
     }
@@ -276,7 +292,7 @@ class OKTC {
      * @param bool $fullTxObj
      * @return array
      */
-    public static function getBlockInfoByNumber(int|string $number, bool $fullTxObj = false) {
+    public static function getBlockInfoByNumber(int|string $number, bool $fullTxObj = false): array {
         $is_hex = Utils::isHex($number);
         if (!$is_hex) {
             $hex_number = Utils::toHex($number, true);
@@ -305,10 +321,15 @@ class OKTC {
                 'code' => 200,
                 'data' => $data['result'],
             ];
+        }catch (RequestException $e){
+            return [
+                'code' => 400,
+                'msg' => 'getBlockInfoByNumber RequestException error, block_num: ' . $number .' error:' . $e->getMessage(),
+            ];
         } catch (GuzzleException $e) {
             return [
                 'code' => 400,
-                'msg' => 'getBlockInfoByNum error: ' . $e->getMessage(),
+                'msg' => 'getBlockInfoByNumber GuzzleException error, block_num: ' . $number .' error:' . $e->getMessage(),
             ];
         }
 
