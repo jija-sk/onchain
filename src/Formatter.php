@@ -42,6 +42,9 @@ class Formatter {
      */
     public static function toIntegerFormat(mixed $value, int $digit = 64): string {
         $bn = Utils::toBn($value);
+        if (is_array($bn)) {
+            $bn = Utils::toMinUnitByDecimals($value, 6); // 默认6位小数，或根据调用场景改为参数
+        }
         $bnHex = $bn->toHex(true);
         $padded = mb_substr($bnHex, 0, 1);
 

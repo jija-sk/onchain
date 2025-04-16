@@ -85,7 +85,6 @@ class Utils {
         if (preg_match('/^(0x|0X)?[a-f0-9A-F]{40}$/', $value) !== 1) {
             return false;
         } elseif (preg_match('/^(0x|0X)?[a-f0-9]{40}$/', $value) === 1 || preg_match('/^(0x|0X)?[A-F0-9]{40}$/', $value) === 1) {
-            var_dump('正则');
             return true;
         }
         return self::isAddressChecksum($value);
@@ -282,7 +281,6 @@ class Utils {
         $bn = self::toBn($number);
 
         $bnt = new BigInteger(bcpow('10', (string)$decimals));
-
         if (is_array($bn)) {
             [$whole, $fraction, $fractionLength, $negative] = $bn;
             $whole = $whole->multiply($bnt);
