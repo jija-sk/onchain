@@ -7,6 +7,7 @@ use kornrunner\Keccak;
 use Onchain\Formatter;
 use Onchain\PEMHelper;
 use Onchain\Utils;
+use Exception;
 
 class ERC20 extends XLayer {
     public static function getBalance(string $address, int $id = 1): string {

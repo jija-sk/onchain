@@ -2,10 +2,10 @@
 
 namespace Onchain\bsc;
 
+use kornrunner\Ethereum\Transaction;
 use Onchain\PEMHelper;
 use Onchain\ProxyApi;
 use Onchain\Utils;
-use Web3p\EthereumTx\Transaction;
 
 class Bnb {
     protected ProxyApi $proxyApi;
@@ -60,7 +60,7 @@ class Bnb {
     }
 
     /**
-     * @desc bnb 转账
+     * @desc bnb 转账 (暂未修改完)
      * @param string $privateKey
      * @param string $to
      * @param float $value
@@ -68,28 +68,28 @@ class Bnb {
      * @return mixed
      */
     public function transfer(string $privateKey, string $to, float $value, string $gasPrice = 'standard') {
-        $from = PEMHelper::privateKeyToAddress($privateKey);
-        $nonce = $this->proxyApi->getNonce($from);
-        if (!Utils::isHex($gasPrice)) {
-            $gasPrice = Utils::toHex(self::gasPriceOracle($gasPrice), true);
-        }
-
-        $eth = Utils::toWei("$value", 'ether');
-        //        $eth = $value * 1e16;
-        $eth = Utils::toHex($eth, true);
-
-        $transaction = new Transaction([
-            'nonce' => "$nonce",
-            'from' => $from,
-            'to' => $to,
-            'gas' => '0x76c0',
-            'gasPrice' => "$gasPrice",
-            'value' => "$eth",
-            'chainId' => self::getChainId($this->proxyApi->getNetwork()),
-        ]);
-
-        $raw = $transaction->sign($privateKey);
-        $res = $this->proxyApi->sendRawTransaction('0x' . $raw);
-        return $res;
+//        $from = PEMHelper::privateKeyToAddress($privateKey);
+//        $nonce = $this->proxyApi->getNonce($from);
+//        if (!Utils::isHex($gasPrice)) {
+//            $gasPrice = Utils::toHex(self::gasPriceOracle($gasPrice), true);
+//        }
+//
+//        $eth = Utils::toWei("$value", 'ether');
+//        //        $eth = $value * 1e16;
+//        $eth = Utils::toHex($eth, true);
+//
+//        $transaction = new Transaction([
+//            'nonce' => "$nonce",
+//            'from' => $from,
+//            'to' => $to,
+//            'gas' => '0x76c0',
+//            'gasPrice' => "$gasPrice",
+//            'value' => "$eth",
+//            'chainId' => self::getChainId($this->proxyApi->getNetwork()),
+//        ]);
+//
+//        $raw = $transaction->sign($privateKey);
+//        $res = $this->proxyApi->sendRawTransaction('0x' . $raw);
+//        return $res;
     }
 }

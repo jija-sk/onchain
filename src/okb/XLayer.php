@@ -135,7 +135,6 @@ class XLayer {
                 ]
             ]);
             $data = json_decode($response->getBody(), true);
-            var_dump($data);
             if (!isset($data['result'])) {
                 return [
                     'code' => 400,
