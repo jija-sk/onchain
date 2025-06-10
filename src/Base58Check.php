@@ -4,14 +4,26 @@ namespace Onchain;
 
 class Base58Check {
     const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-    public static function TronHexToBase58($hexAddress)
+    public static function tronHexToBase58($hexAddress)
     {
         $address = hex2bin($hexAddress);
         $hash0 = hash("sha256", $address, true);
         $hash1 = hash("sha256", $hash0, true);
         $checksum = substr($hash1, 0, 4);
-        $base58 = self::encode($address . $checksum);
+        $base58 = self::base58_encode($address . $checksum);
         return $base58;
+    }
+
+    public static function base58_encode($string)
+    {
+        $alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        $out = '';
+        $num = gmp_init(bin2hex($string), 16);
+        while (gmp_cmp($num, 0) > 0) {
+            list($num, $rem) = gmp_div_qr($num, 58);
+            $out = $alphabet[gmp_intval($rem)] . $out;
+        }
+        return $out;
     }
     public static function encode(string $input): string
     {
