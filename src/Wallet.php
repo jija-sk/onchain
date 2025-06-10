@@ -14,7 +14,7 @@ class Wallet {
     const DEFAULT_PATH = "m/44'/60'/0'/0/0";
 
     /**
-     * @desc 生成秘钥账户
+     * @desc 生成秘钥账户(只支持兼容 evm)
      * @return array
      */
     public static function create_account_with_private(): array {
@@ -29,6 +29,12 @@ class Wallet {
         ];
     }
 
+    /**
+     * @desc 生成秘钥账户带助记词(只支持兼容 evm)
+     * @param string $passphrase
+     * @param string $path
+     * @return false|array
+     */
     public static function create_account_with_mem(string $passphrase = '', string $path = self::DEFAULT_PATH): false|array {
         try {
             $mnemonic = BIP39::fromRandom(English::getInstance(), 12);

@@ -79,12 +79,25 @@ class PEMHelper {
         return '0x' . $keyPair->getPublic(false, 'hex');  // Uncompressed format
     }
 
+    public static function privateKeyToTronPublicKey(string $privateKey):string{
+        $secp256k1 = new EC('secp256k1');
+        $keyPair = $secp256k1->keyFromPrivate($privateKey, 'hex');
+        $pubKey = $keyPair->getPublic(false, 'hex');
+        $pubKeyHex = substr($pubKey, 2);
+        $hash = self::sha3(hex2bin($pubKeyHex));
+        if ($hash === '') {
+            return '';
+        }
+        $addressHex = '41' . substr($hash, -40);
+        return Base58Check::encode(hex2bin($addressHex));
+    }
+
     /**
      * Compute Keccak-256 (SHA3) hash.
      * @param string $value Input data
      * @return string Keccak-256 hash or null if empty
      */
-    public static function sha3(string $value): string {
+    private static function sha3(string $value): string {
         try {
             $hash = Keccak::hash($value, 256);
         }catch (Exception $e){
