@@ -51,4 +51,33 @@ class Wallet {
             "mem" => implode(' ', $mnemonic->words),
         ];
     }
+
+    public static function recover_account_from_mem(string $mnemonic, string $passphrase = '', string $path = self::DEFAULT_PATH): false|array {
+        try {
+
+            $mnemonicArr = preg_split('/\s+/', trim($mnemonic));
+            var_dump($mnemonicArr);
+            // 1. 验证助记词合法性
+            $mnemonicObj = BIP39::fromMnemonic($mnemonicArr, English::getInstance());
+
+            // 2. 生成 seed
+            $seed = $mnemonicObj->generateSeed($passphrase);
+
+            // 3. 从 seed 派生 HD 钱包 (BIP44)
+            $HDKey = BIP44::fromMasterSeed(bin2hex($seed))->derive($path);
+
+            // 4. 取出私钥
+            $privateKey = $HDKey->privateKey;
+
+            // 5. 生成地址（依赖你的 PEMHelper 工具）
+            $address = PEMHelper::privateKeyToAddress($privateKey);
+
+            return [
+                "address" => $address,
+                "private_key" => $privateKey,
+            ];
+        } catch (Bip39MnemonicException|Bip39EntropyException|Exception $e) {
+            return false;
+        }
+    }
 }
