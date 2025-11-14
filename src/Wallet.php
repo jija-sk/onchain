@@ -56,7 +56,6 @@ class Wallet {
         try {
 
             $mnemonicArr = preg_split('/\s+/', trim($mnemonic));
-            var_dump($mnemonicArr);
             // 1. 验证助记词合法性
             $mnemonicObj = BIP39::fromMnemonic($mnemonicArr, English::getInstance());
 
